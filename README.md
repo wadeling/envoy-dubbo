@@ -11,19 +11,27 @@ dubbo consummer -> envoy -> dubbo provider
 
 # dubbo 服务搭建
 
+```
 git clone https://github.com/apache/dubbo-samples.git
+
 cd dubbo-samples-api
+
 mvn clean package
+```
 
 以上步骤进行构建。
 
 注意，例子使用zookeeper来做服务发现，需要我们自己搭建zk。这里我直接用zk的dock镜像来搭建服务。zk的配置和启动脚本放在zookeeper目录下。
 
 启动provider：
+```
 mvn -Djava.net.preferIPv4Stack=true -Dexec.mainClass=org.apache.dubbo.samples.provider.Application exec:java
+```
 
 启动consummer：
+```
 mvn -Djava.net.preferIPv4Stack=true -Dexec.mainClass=org.apache.dubbo.samples.client.Application exec:java
+```
 
 这时可以看到consummer打印了“hi,dubbo".
 
