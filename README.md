@@ -35,5 +35,46 @@ mvn -Djava.net.preferIPv4Stack=true -Dexec.mainClass=org.apache.dubbo.samples.cl
 
 这时可以看到consummer打印了“hi,dubbo".
 
-# 使用envoy来做代理
+# dubbo 直连服务搭建
+
+在上面的例子里面，dubbo的provider和consumer不是直连的，是通过zk来获取服务地址的。这种情况下没法加入envoy代理。所以我们尝试搭建一个直连的服务。
+查看dubbo-samples的代码，发现有直连的例子：dubbo-samples-direct.
+
+```
+cd dubbo-samples-direct
+
+mvn clean package
+```
+然后启动provider:
+
+```
+mvn -Djava.net.preferIPv4Stack=true -Dexec.mainClass=org.apache.dubbo.samples.direct.DirectProvider exec:java
+```
+
+再启动consummer：
+```
+mvn -Djava.net.preferIPv4Stack=true -Dexec.mainClass=org.apache.dubbo.samples.direct.DirectConsumer exec:java
+```
+
+但是没有成功，提示可能是group或者version mismatch。于是修改src/main/resource/dubbo-direct-consumer.xml以及dubbo-direct-provider.xml,去掉groups以及version。
+其实两个文件的group和version是对得上的，不知道哪里有问题。
+__这里注意的是：修改xml文件后，必须重新执行mvn clean package，不然不会生效__(java新手，不知道是啥原因)
+
+最后重新启动provider和consumer，直连成功
+
+# dubbo-consumer -> envoy (dubbo-filter) -> dubbo-provider 搭建
+
+使用envoy的master版本，本地编译后运行（配置文件在envoy-proxy目录）。
+注意这里有几个修改：
+- envoy 监听20881 端口，cluster配置为20880端口（即dubbo-provider的监听端口）
+- 修改dubbo-consumer的xml文件，使其请求20881端口
+- envoy配置里面，dubbo-filter的interface match规则要匹配代码里面的interface名字
+
+启动envoy，provider，再执行consumer，发现请求成功。
+
+
+# dubbo-consumer -> envoy (http-connnection-filter,dubbo-private-proto-filter) -> dubbo-provider 搭建
+
+这里有几个工作：
+- 移植dubbo解码的代码到我们的框架
 
